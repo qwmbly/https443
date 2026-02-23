@@ -13,12 +13,20 @@
             margin: 0;
             display: flex;
             flex-direction: column;
-            align-items: flex-start;
+            align-items: center; /* Centered for the game */
             height: 100vh;
             overflow: hidden;
         }
-        #terminal {
+
+        /* Terminal Styles */
+        #terminal-container {
+            width: 100%;
             max-width: 800px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        #terminal {
             width: 100%;
             line-height: 1.5;
         }
@@ -59,18 +67,15 @@
             background-color: #00ff00;
             color: #0a0a0a;
         }
+
+        /* Game Styles */
         #game-container {
             display: none;
             flex-direction: column;
             align-items: center;
             width: 100%;
-           max-width: 800px;
+            max-width: 800px;
         }
-        #gameCanvas {
-            background-color: #050505;
-            border: 1px solid #00ff00;
-            cursor: crosshair;
-        }    
         #scoreboard {
             width: 100%;
             display: flex;
@@ -78,16 +83,35 @@
             margin-bottom: 10px;
             font-size: 1.2rem;
         }
+        #gameCanvas {
+            background-color: #050505;
+            border: 1px solid #00ff00;
+            cursor: crosshair;
+            max-width: 100%;
+        }
     </style>
 </head>
 <body>
 
-    <div id="terminal"></div>
-    <div id="action-container">
-        <button class="btn" id="continue-btn">Initialize Diagnostic // Start</button>
+    <div id="terminal-container">
+        <div id="terminal"></div>
+        <div id="action-container">
+            <button class="btn" id="continue-btn">Initialize Diagnostic // Start</button>
+        </div>
+    </div>
+
+    <div id="game-container">
+        <div id="scoreboard">
+            <span>System Integrity: <span id="health">100</span>%</span>
+            <span>Packets Blocked: <span id="score">0</span></span>
+        </div>
+        <canvas id="gameCanvas" width="800" height="500"></canvas>
     </div>
 
     <script>
+        /* =========================================
+           PHASE 1: TERMINAL LOGIC
+           ========================================= */
         const sequence = [
             "Initializing connection to https443.com...",
             "Resolving host... [OK]",
@@ -105,13 +129,14 @@
             "Awaiting input..."
         ];
 
+        const terminalContainer = document.getElementById('terminal-container');
         const terminal = document.getElementById('terminal');
         const actionContainer = document.getElementById('action-container');
+        const continueBtn = document.getElementById('continue-btn');
         let lineIndex = 0;
 
         function typeLine(text, element, callback) {
             let charIndex = 0;
-            // Slight randomization for typing speed to feel authentic
             const speed = Math.random() * 30 + 20; 
 
             function typeChar() {
@@ -120,7 +145,7 @@
                     charIndex++;
                     setTimeout(typeChar, speed);
                 } else {
-                    setTimeout(callback, 300); // Pause at the end of a line
+                    setTimeout(callback, 300);
                 }
             }
             typeChar();
@@ -143,28 +168,19 @@
                     processSequence();
                 });
             } else {
-                // Reveal the button once sequence is done
                 actionContainer.style.display = 'block';
                 setTimeout(() => {
                     actionContainer.style.opacity = '1';
                 }, 50);
             }
         }
-    <div id="game-container">
-        <div id="scoreboard">
-            <span>System Integrity: <span id="health">100</span>%</span>
-            <span>Packets Blocked: <span id="score">0</span></span>
-        </div>
-    <canvas id="gameCanvas" width="800" height="500"></canvas>
-    </div>
-        // Start the sequence after a short delay
+
         setTimeout(processSequence, 500);
 
-        // Hook for the future game
-        document.getElementById('continue-btn').addEventListener('click', () => {
-            terminal.innerHTML = '<span class="line">Loading diagnostic environment...</span><span class="cursor"></span>';
-            actionContainer.style.display = 'none';
-            // Game Variables
+
+        /* =========================================
+           PHASE 2: GAME LOGIC
+           ========================================= */
         const gameContainer = document.getElementById('game-container');
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
@@ -176,8 +192,8 @@
         let gameActive = false;
         let packets = [];
         let projectiles = [];
-        
-        // Turret Object (Honey Badger IDS)
+
+        // Turret Object
         const turret = {
             x: canvas.width / 2,
             y: canvas.height - 30,
@@ -185,139 +201,154 @@
             height: 30,
             angle: 0
         };
-        
-        // Start Game Hook
-        document.getElementById('continue-btn').addEventListener('click', () => {
-            terminal.style.display = 'none';
-            actionContainer.style.display = 'none';
+
+        // Transition from Terminal to Game
+        continueBtn.addEventListener('click', () => {
+            terminalContainer.style.display = 'none';
             gameContainer.style.display = 'flex';
             gameActive = true;
             gameLoop();
             spawnPackets();
         });
-        
-        // Mouse Tracking for Turret Aiming
+
+        // Mouse Tracking
         canvas.addEventListener('mousemove', (e) => {
             const rect = canvas.getBoundingClientRect();
-            const mouseX = e.clientX - rect.left;
-            const mouseY = e.clientY - rect.top;
+            // Scale mouse coordinates if canvas is resized by CSS
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            
+            const mouseX = (e.clientX - rect.left) * scaleX;
+            const mouseY = (e.clientY - rect.top) * scaleY;
+            
             turret.angle = Math.atan2(mouseY - turret.y, mouseX - turret.x);
         });
-        
+
         // Click to Fire
         canvas.addEventListener('click', () => {
             if (!gameActive) return;
             projectiles.push({
                 x: turret.x,
                 y: turret.y,
-                vx: Math.cos(turret.angle) * 7,
-                vy: Math.sin(turret.angle) * 7,
+                vx: Math.cos(turret.angle) * 8,
+                vy: Math.sin(turret.angle) * 8,
                 radius: 3
             });
         });
-        
+
         // Packet Spawner
         function spawnPackets() {
             if (!gameActive) return;
-            const isMalicious = Math.random() > 0.3; // 70% chance of bad packet
+            const isMalicious = Math.random() > 0.3; 
             packets.push({
-                x: Math.random() * (canvas.width - 20) + 10,
-                y: 0,
+                x: Math.random() * (canvas.width - 40) + 20,
+                y: -10,
                 radius: 8,
-                speed: Math.random() * 1.5 + 0.5,
+                speed: Math.random() * 1.5 + 0.8,
                 isMalicious: isMalicious,
                 color: isMalicious ? '#ff0000' : '#00ff00'
             });
-            setTimeout(spawnPackets, Math.random() * 1000 + 500);
+            setTimeout(spawnPackets, Math.random() * 800 + 400);
         }
-        
+
         // Main Game Loop
         function gameLoop() {
             if (!gameActive) return;
             requestAnimationFrame(gameLoop);
-        
-            // Clear Canvas
+
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-        
-            // Draw IDS Status Text
-            ctx.fillStyle = "rgba(0, 255, 0, 0.2)";
+
+            // Draw Background Text
+            ctx.fillStyle = "rgba(0, 255, 0, 0.15)";
             ctx.font = "20px Courier New";
+            ctx.textAlign = "left";
             ctx.fillText("IDS: HONEY BADGER ONLINE", 20, 30);
-        
+            ctx.fillText("TARGET: RED PACKETS", 20, 55);
+
             // Update & Draw Projectiles
             ctx.fillStyle = '#00ffff';
-            projectiles.forEach((p, index) => {
+            for (let i = projectiles.length - 1; i >= 0; i--) {
+                let p = projectiles[i];
                 p.x += p.vx;
                 p.y += p.vy;
                 ctx.beginPath();
                 ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
                 ctx.fill();
-        
-                // Remove off-screen projectiles
+
                 if (p.x < 0 || p.x > canvas.width || p.y < 0 || p.y > canvas.height) {
-                    projectiles.splice(index, 1);
+                    projectiles.splice(i, 1);
                 }
-            });
-        
+            }
+
             // Update & Draw Packets
-            packets.forEach((pkt, pktIndex) => {
+            for (let i = packets.length - 1; i >= 0; i--) {
+                let pkt = packets[i];
                 pkt.y += pkt.speed;
                 ctx.fillStyle = pkt.color;
                 ctx.beginPath();
                 ctx.arc(pkt.x, pkt.y, pkt.radius, 0, Math.PI * 2);
                 ctx.fill();
-        
-                // Collision: Packet hits the server (bottom)
+
+                // Collision: Packet hits bottom
                 if (pkt.y + pkt.radius > canvas.height) {
                     if (pkt.isMalicious) {
                         health -= 10;
                         healthEl.innerText = health;
                     }
-                    packets.splice(pktIndex, 1);
+                    packets.splice(i, 1);
+                    continue;
                 }
-        
+
                 // Collision: Projectile hits Packet
-                projectiles.forEach((proj, projIndex) => {
+                let packetDestroyed = false;
+                for (let j = projectiles.length - 1; j >= 0; j--) {
+                    let proj = projectiles[j];
                     const dist = Math.hypot(proj.x - pkt.x, proj.y - pkt.y);
+                    
                     if (dist - proj.radius - pkt.radius < 1) {
                         if (pkt.isMalicious) {
                             score++;
                             scoreEl.innerText = score;
                         } else {
-                            health -= 5; // Penalty for shooting legit traffic
+                            health -= 5; 
                             healthEl.innerText = health;
                         }
-                        setTimeout(() => {
-                            packets.splice(pktIndex, 1);
-                            projectiles.splice(projIndex, 1);
-                        }, 0);
+                        projectiles.splice(j, 1);
+                        packetDestroyed = true;
+                        break; 
                     }
-                });
-            });
-        
-            // Draw Turret
+                }
+                
+                if (packetDestroyed) {
+                    packets.splice(i, 1);
+                }
+            }
+
+            // Draw Turret Base & Barrel
             ctx.save();
             ctx.translate(turret.x, turret.y);
             ctx.rotate(turret.angle);
             ctx.fillStyle = '#00ff00';
-            ctx.fillRect(0, -10, 30, 20); // Barrel
+            ctx.fillRect(0, -5, 30, 10); 
             ctx.restore();
+            
             ctx.beginPath();
-            ctx.arc(turret.x, turret.y, 20, Math.PI, 0); // Base
+            ctx.arc(turret.x, turret.y, 20, Math.PI, 0); 
             ctx.fill();
-        
-            // Game Over Logic
+
+            // Game Over State
             if (health <= 0) {
                 gameActive = false;
                 ctx.fillStyle = '#ff0000';
-                ctx.font = "40px Courier New";
-                ctx.fillText("SYSTEM COMPROMISED", canvas.width / 2 - 220, canvas.height / 2);
+                ctx.font = "bold 40px Courier New";
+                ctx.textAlign = "center";
+                ctx.fillText("SYSTEM COMPROMISED", canvas.width / 2, canvas.height / 2);
+                
                 ctx.font = "20px Courier New";
                 ctx.fillStyle = '#00ff00';
-                ctx.fillText("Email me to deploy a patch: alex@https443.com", canvas.width / 2 - 270, canvas.height / 2 + 40);
+                ctx.fillText("Email me to deploy a patch: careers@0xbau.com", canvas.width / 2, canvas.height / 2 + 40);
             }
         }
-        });
     </script>
 </body>
 </html>
