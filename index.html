@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>https443 - Secure Connection</title>
+    <style>
+        body {
+            background-color: #0a0a0a;
+            color: #00ff00;
+            font-family: 'Courier New', Courier, monospace;
+            padding: 2rem;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            height: 100vh;
+            overflow: hidden;
+        }
+        #terminal {
+            max-width: 800px;
+            width: 100%;
+            line-height: 1.5;
+        }
+        .line {
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+        .cursor {
+            display: inline-block;
+            width: 10px;
+            height: 1.2em;
+            background-color: #00ff00;
+            vertical-align: middle;
+            animation: blink 1s step-end infinite;
+        }
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+        #action-container {
+            margin-top: 2rem;
+            display: none;
+            opacity: 0;
+            transition: opacity 1s ease-in;
+        }
+        .btn {
+            background-color: transparent;
+            color: #00ff00;
+            border: 1px solid #00ff00;
+            padding: 10px 20px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1rem;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: all 0.3s ease;
+        }
+        .btn:hover {
+            background-color: #00ff00;
+            color: #0a0a0a;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="terminal"></div>
+    <div id="action-container">
+        <button class="btn" id="continue-btn">Initialize Diagnostic // Start</button>
+    </div>
+
+    <script>
+        const sequence = [
+            "Initializing connection to https443.com...",
+            "Resolving host... [OK]",
+            "Initiating TCP handshake: SYN sent.",
+            "SYN-ACK received. ACK sent.",
+            "Client Hello: TLS 1.3 supported.",
+            "Server Hello: Cipher suite TLS_AES_256_GCM_SHA384 selected.",
+            "Verifying certificate chain... [VALID]",
+            "Performing key exchange... [COMPLETE]",
+            "Session encrypted.",
+            " ",
+            "Host Identity: Alex Baucom",
+            "Classification: Security Investigations Analyst",
+            " ",
+            "Awaiting input..."
+        ];
+
+        const terminal = document.getElementById('terminal');
+        const actionContainer = document.getElementById('action-container');
+        let lineIndex = 0;
+
+        function typeLine(text, element, callback) {
+            let charIndex = 0;
+            // Slight randomization for typing speed to feel authentic
+            const speed = Math.random() * 30 + 20; 
+
+            function typeChar() {
+                if (charIndex < text.length) {
+                    element.innerHTML += text.charAt(charIndex);
+                    charIndex++;
+                    setTimeout(typeChar, speed);
+                } else {
+                    setTimeout(callback, 300); // Pause at the end of a line
+                }
+            }
+            typeChar();
+        }
+
+        function processSequence() {
+            if (lineIndex < sequence.length) {
+                const lineDiv = document.createElement('span');
+                lineDiv.className = 'line';
+                
+                const cursor = document.createElement('span');
+                cursor.className = 'cursor';
+                
+                terminal.appendChild(lineDiv);
+                terminal.appendChild(cursor);
+
+                typeLine(sequence[lineIndex], lineDiv, () => {
+                    terminal.removeChild(cursor);
+                    lineIndex++;
+                    processSequence();
+                });
+            } else {
+                // Reveal the button once sequence is done
+                actionContainer.style.display = 'block';
+                setTimeout(() => {
+                    actionContainer.style.opacity = '1';
+                }, 50);
+            }
+        }
+
+        // Start the sequence after a short delay
+        setTimeout(processSequence, 500);
+
+        // Hook for the future game
+        document.getElementById('continue-btn').addEventListener('click', () => {
+            terminal.innerHTML = '<span class="line">Loading diagnostic environment...</span><span class="cursor"></span>';
+            actionContainer.style.display = 'none';
+            // We will inject the game canvas or logic here next
+        });
+    </script>
+</body>
+</html>
