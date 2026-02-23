@@ -339,6 +339,23 @@
             // Game Over State
             if (health <= 0) {
                 gameActive = false;
+                
+                // Wipe the canvas clean to remove all packets and projectiles
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                // Draw a "dead" turret
+                ctx.save();
+                ctx.translate(turret.x, turret.y);
+                ctx.rotate(turret.angle);
+                ctx.fillStyle = '#440000'; // Dark red
+                ctx.fillRect(0, -5, 30, 10); 
+                ctx.restore();
+                
+                ctx.beginPath();
+                ctx.arc(turret.x, turret.y, 20, Math.PI, 0); 
+                ctx.fill();
+
+                // Draw the Game Over text cleanly over the empty background
                 ctx.fillStyle = '#ff0000';
                 ctx.font = "bold 40px Courier New";
                 ctx.textAlign = "center";
@@ -346,7 +363,7 @@
                 
                 ctx.font = "20px Courier New";
                 ctx.fillStyle = '#00ff00';
-                ctx.fillText("Email me to deploy a patch: alex@https443.com", canvas.width / 2, canvas.height / 2 + 40);
+                ctx.fillText("Email me to deploy a patch: careers@0xbau.com", canvas.width / 2, canvas.height / 2 + 40);
             }
         }
     </script>
